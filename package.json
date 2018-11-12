@@ -36,6 +36,7 @@
     "bigi": "^1.4.2",
     "bip39": "^2.5.0",
     "bitcoinforksjs-lib": "git://github.com/SuperNETorg/bitcoinjs-lib.git#opt-in-bitcoincash-sighash",
+    "bitgo-utxo-lib": "git+https://github.com/pbca26/bitgo-utxo-lib.git",
     "bitcoinjs-lib": "git://github.com/SuperNETorg/bitcoinjs-lib.git",
     "bitcoinjs-lib-pos": "git://github.com/KomodoPlatform/bitcoinjs-lib-pos.git",
     "bitcoinjs-lib-zcash": "git://github.com/pbca26/bitcoinjs-lib.git#zcash",

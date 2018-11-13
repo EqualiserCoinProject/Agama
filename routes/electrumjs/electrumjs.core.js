@@ -1,7 +1,8 @@
 /*
 MIT License
 
-Copyright (c) 2017 Yuki Akiyama, SuperNET
+Copyright (c) 2017 Yuki Akiyama
+Copyright (c) 2017 - 2018 SuperNET
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +26,8 @@ SOFTWARE.
 const tls = require('tls');
 const net = require('net');
 const EventEmitter = require('events').EventEmitter;
-const SOCKET_MAX_TIMEOUT = 10000;
 
-const makeRequest = function(method, params, id) {
+const makeRequest = (method, params, id) => {
   return JSON.stringify({
     jsonrpc : '2.0',
     method : method,
@@ -36,7 +36,7 @@ const makeRequest = function(method, params, id) {
   });
 }
 
-const createRecursiveParser = function(maxDepth, delimiter) {
+const createRecursiveParser = (maxDepth, delimiter) => {
   const MAX_DEPTH = maxDepth;
   const DELIMITER = delimiter;
   const recursiveParser = function(n, buffer, callback) {
@@ -71,7 +71,7 @@ const createRecursiveParser = function(maxDepth, delimiter) {
   return recursiveParser;
 }
 
-const createPromiseResult = function(resolve, reject) {
+const createPromiseResult = (resolve, reject) => {
   return (err, result) => {
     if (err) {
       console.log('electrum error:');
@@ -113,7 +113,7 @@ const util = {
   MessageParser,
 };
 
-const getSocket = function(protocol, options) {
+const getSocket = (protocol, options) => {
   switch (protocol) {
   case 'tcp':
     return new net.Socket();
@@ -126,10 +126,10 @@ const getSocket = function(protocol, options) {
   throw new Error('unknown protocol');
 }
 
-const initSocket = function(self, protocol, options) {
+const initSocket = (self, protocol, socketTimeout, options) => {
   const conn = getSocket(protocol, options);
 
-  conn.setTimeout(SOCKET_MAX_TIMEOUT);
+  conn.setTimeout(socketTimeout);
   conn.on('timeout', () => {
     console.log('socket timeout');
     self.onError(new Error('socket timeout'));
@@ -158,13 +158,13 @@ const initSocket = function(self, protocol, options) {
 }
 
 class Client {
-  constructor(port, host, protocol = 'tcp', options = void 0) {
+  constructor(port, host, protocol = 'tcp', socketTimeout = 10000, options = void 0) {
     this.id = 0;
     this.port = port;
     this.host = host;
     this.callbackMessageQueue = {};
     this.subscribe = new EventEmitter();
-    this.conn = initSocket(this, protocol, options);
+    this.conn = initSocket(this, protocol, socketTimeout, options);
     this.mp = new util.MessageParser((body, n) => {
       this.onMessage(body, n);
     });
@@ -265,8 +265,9 @@ class Client {
 }
 
 class ElectrumJSCore extends Client {
-  constructor(protocol, port, host, options) {
-    super(protocol, port, host, options);
+
+  constructor(port, host, protocol, timeout, options) {
+    super(port, host, protocol, timeout, options);
   }
 
   onClose() {
@@ -330,10 +331,6 @@ class ElectrumJSCore extends Client {
     return this.request('blockchain.headers.subscribe', []);
   }
 
-  blockchainNumblocksSubscribe() {
-    return this.request('blockchain.numblocks.subscribe', []);
-  }
-
   blockchainRelayfee() {
     return this.request('blockchain.relayfee', []);
   }
@@ -342,8 +339,8 @@ class ElectrumJSCore extends Client {
     return this.request('blockchain.transaction.broadcast', [rawtx]);
   }
 
-  blockchainTransactionGet(tx_hash, height) {
-    return this.request('blockchain.transaction.get', [tx_hash, height]);
+  blockchainTransactionGet(tx_hash) {
+    return this.request('blockchain.transaction.get', [tx_hash]);
   }
 
   blockchainTransactionGetMerkle(tx_hash, height) {
